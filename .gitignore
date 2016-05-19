@@ -1,3 +1,5 @@
+read-macho
+
 # Object files
 *.o
 *.ko
