@@ -1,19 +1,18 @@
-PROJECT	:= read-macho
 CC 		:= clang++
-CFLAGS 	:= -Wall -Wextra -pedantic -g
+CFLAGS 	:= -Wall -Wextra -pedantic 
 
-.PHONY: $(PROJECT) all clean realclean
+.PHONY: read-macho write-macho all clean
 
-all: $(PROJECT)
+all: read-macho write-macho
 
 clean: 
-	-$(RM) $(PROJECT).o
+	-$(RM) read-macho.o write-macho.o read-macho write-macho
 
-realclean: clean
-	-$(RM) $(PROJECT)
-
-$(PROJECT): $(PROJECT).o
+read-macho: read-macho.o
 	$(CC) -o $@ $< 
+
+write-macho: write-macho.o
+	$(CC) -o $@ $<
 
 %.o: %.cpp
 	$(CC) -std=c++11 $(CFLAGS) -o $@ $< -c

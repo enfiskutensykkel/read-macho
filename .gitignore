@@ -1,4 +1,5 @@
 read-macho
+write-macho
 
 # Object files
 *.o

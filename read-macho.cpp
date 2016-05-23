@@ -90,7 +90,7 @@ void parse_64bit_mach(FILE* stream)
     map_section_64 sections;
 
     entry_point_command entry_point;
-    linkedit_data_command linkedit_data;
+    dylib_command dylib;
 
     for (uint32_t i = 0; i < header.ncmds; ++i)
     {
@@ -110,8 +110,9 @@ void parse_64bit_mach(FILE* stream)
                 fread(&entry_point, sizeof(entry_point_command), 1, stream);
                 break;
 
-            case LC_FUNCTION_STARTS:
-                fread(&linkedit_data, sizeof(linkedit_data_command), 1, stream);
+            case LC_LOAD_DYLIB:
+                fread(&dylib, sizeof(dylib), 1, stream);
+                fprintf(stdout, "%x\n", dylib.dylib.current_version);
                 break;
         }
         
@@ -133,9 +134,10 @@ void parse_64bit_mach(FILE* stream)
 
         if (text_seg.get() != nullptr)
         {
-            fseek(stream, text_seg->fileoff + entry_point.entryoff, SEEK_SET);
+            //fseek(stream, text_seg->fileoff + entry_point.entryoff, SEEK_SET);
+            fseek(stream, entry_point.entryoff, SEEK_SET);
 
-            for (int i = 0; i < 16; ++i)
+            for (int i = 0; i < 32; ++i)
             {
                 int data = fgetc(stream);
                 fprintf(stdout, "%02x ", data);
