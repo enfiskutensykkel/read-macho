@@ -158,8 +158,14 @@ void create_executable(FILE* stream, uint8_t* data, size_t len)
     hdr.cputype = CPU_TYPE_X86_64;
     hdr.cpusubtype = CPU_SUBTYPE_LIB64 | CPU_SUBTYPE_I386_ALL;
     hdr.filetype = MH_EXECUTE;
-    hdr.ncmds = 6;
-    hdr.sizeofcmds = sizeof(null_seg) + sizeof(linkedit) + sizeof(seg) + sizeof(sect) + sizeof(dyld) + 20 + sizeof(entry) + sizeof(libsys) + 32;
+    hdr.ncmds = 5;
+    hdr.sizeofcmds = 0;
+    hdr.sizeofcmds += sizeof(null_seg);
+    hdr.sizeofcmds += sizeof(linkedit);
+    hdr.sizeofcmds += sizeof(seg) + sizeof(sect);
+    hdr.sizeofcmds += sizeof(dyld) + 20;
+    hdr.sizeofcmds += sizeof(entry);
+    //hdr.sizeofcmds += sizeof(libsys) + 32;
     hdr.flags = MH_NOUNDEFS;
     hdr.reserved = 0;
 
@@ -167,7 +173,7 @@ void create_executable(FILE* stream, uint8_t* data, size_t len)
     null_seg.cmdsize = sizeof(null_seg);
     strcpy(null_seg.segname, SEG_PAGEZERO);
     null_seg.vmaddr = 0x0;
-    null_seg.vmsize = 0x1000;
+    null_seg.vmsize = 0x100000000;
     null_seg.fileoff = 0;
     null_seg.filesize = 0;
     null_seg.maxprot = VM_PROT_NONE;
@@ -178,7 +184,7 @@ void create_executable(FILE* stream, uint8_t* data, size_t len)
     seg.cmd = LC_SEGMENT_64;
     seg.cmdsize = sizeof(seg) + sizeof(sect);
     strcpy(seg.segname, SEG_TEXT);
-    seg.vmaddr = 0x1000;
+    seg.vmaddr = 0x1000000000;
     seg.vmsize = 0x1000;
     seg.fileoff = 0; //hdr.sizeofcmds + sizeof(hdr); 
     seg.filesize = 0;
@@ -189,7 +195,7 @@ void create_executable(FILE* stream, uint8_t* data, size_t len)
 
     strcpy(sect.sectname, SECT_TEXT);
     strcpy(sect.segname, SEG_TEXT);
-    sect.addr = 0x1000;
+    sect.addr = 0x1000000000;
     sect.size = len;
     sect.offset = hdr.sizeofcmds + sizeof(hdr);
     sect.align = 4;
@@ -201,12 +207,12 @@ void create_executable(FILE* stream, uint8_t* data, size_t len)
     linkedit.cmd = LC_SEGMENT_64;
     linkedit.cmdsize = sizeof(linkedit);
     strcpy(linkedit.segname, SEG_LINKEDIT);
-    linkedit.vmaddr = 0x9000;
+    linkedit.vmaddr = 0x1000009000;
     linkedit.vmsize = 0x1000;
     linkedit.fileoff = 0;
     linkedit.filesize = 0;
     linkedit.maxprot = VM_PROT_ALL;
-    linkedit.initprot = VM_PROT_DEFAULT;
+    linkedit.initprot = VM_PROT_ALL;
     linkedit.nsects = 0;
     linkedit.flags = 0;
 
@@ -234,17 +240,12 @@ void create_executable(FILE* stream, uint8_t* data, size_t len)
     fwrite(&dyld, sizeof(dyld), 1, stream);
     fwrite("/usr/lib/dyld\x00\x00\x00\x00\x00\x00\x00", 1, 20, stream);
     fwrite(&entry, sizeof(entry), 1, stream);
-    fwrite(&libsys, sizeof(libsys), 1, stream);
-    fwrite("/usr/lib/libSystem.B.dylib\x00\x00\x00\x00\x00\x00", 1, 32, stream);
+//    fwrite(&libsys, sizeof(libsys), 1, stream);
+//    fwrite("/usr/lib/libSystem.B.dylib\x00\x00\x00\x00\x00\x00", 1, 32, stream);
 
     fwrite(data, 1, len, stream);
 
-//    for (size_t i = 0; i < (64ULL - len); ++i)
-//    {
-//        fwrite("\x00", 1, 1, stream);
-//    }
-
-    for (size_t i = 0; i < 0x1000; ++i)
+    for (size_t i = 0; i < (0x1000 - len - hdr.sizeofcmds - sizeof(hdr)); ++i)
     {
         fwrite("\x00", 1, 1, stream);
     }
